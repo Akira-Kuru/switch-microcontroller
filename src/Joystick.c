@@ -16,9 +16,8 @@ const __flash command STARTUP[] = {
     { TRIGGERS,   5 },    { NOTHING,  150 },
     { A,          5 },    { NOTHING,  250 },
 
-    // Go into game
-    { HOME,       5 },    { NOTHING,  250 },
-    { A,          5 },    { NOTHING,  250 },
+    // go to home screen
+    { HOME,       5 },
 };
 const int STARTUP_LENGTH = sizeof(STARTUP) / sizeof(command);
 
@@ -306,6 +305,13 @@ void GetNextReport(USB_JoystickReport_Input_t* report, uint8_t c) {
         case '$':
             report->LX = (STICK_MAX - STICK_MIN) * 3 / 5;
             report->LY = (STICK_MAX - STICK_MIN) * 3 / 5;
+            break;
+
+        case '{':
+            report->Button = SWITCH_LCLICK;
+            break;
+        case '}':
+            report->Button = SWITCH_RCLICK;
             break;
     }
 }

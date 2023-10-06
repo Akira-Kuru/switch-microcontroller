@@ -18,8 +18,8 @@ from scripts.engine import run
 from scripts.engine import SERIAL_DEFAULT
 from scripts.engine import States
 from scripts.engine import Wait
+from scripts.sv._bootup import world
 from scripts.sv._move_box import move_box
-from scripts.sv._pixels import world_matches
 from scripts.sv._to_boxes import to_boxes
 
 
@@ -29,7 +29,6 @@ def main() -> int:
     args = parser.parse_args()
 
     require_tesseract()
-    vid = make_vid()
 
     pos0_matches = match_px(Point(y=169, x=372), Color(b=42, g=197, r=213))
     pos1_matches = match_px(Point(y=251, x=366), Color(b=47, g=189, r=220))
@@ -106,13 +105,13 @@ def main() -> int:
         ),
         **move_box('BOX_RIGHT', 'OUT', 'R'),
         'OUT': (
-            (world_matches, bye, 'INVALID'),
+            (world, bye, 'INVALID'),
             (always_matches, do(Press('B'), Wait(.5)), 'OUT'),
         ),
     }
 
     with serial.Serial(args.serial, 9600) as ser:
-        run(vid=vid, ser=ser, initial='INITIAL', states=states)
+        run(vid=make_vid(), ser=ser, initial='INITIAL', states=states)
 
 
 if __name__ == '__main__':

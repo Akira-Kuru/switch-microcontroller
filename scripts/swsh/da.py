@@ -21,7 +21,6 @@ from scripts.engine import get_text
 from scripts.engine import getframe
 from scripts.engine import make_vid
 from scripts.engine import match_px
-from scripts.engine import match_px_exact
 from scripts.engine import match_text
 from scripts.engine import Point
 from scripts.engine import Press
@@ -29,6 +28,8 @@ from scripts.engine import run
 from scripts.engine import SERIAL_DEFAULT
 from scripts.engine import States
 from scripts.engine import Wait
+from scripts.swsh._bootup import bootup
+from scripts.swsh._bootup import world
 
 WORD = re.compile('[a-z]+')
 TYPES = frozenset((
@@ -79,8 +80,6 @@ def main() -> int:
             pokemon.add(tuple(parts))
             types.update(parts[1:])
 
-    vid = make_vid()
-
     should_reset = True
 
     def should_reset_record(vid: cv2.VideoCapture, ser: serial.Serial) -> None:
@@ -94,7 +93,7 @@ def main() -> int:
             invert=True,
         )
         # sometimes the ocr engine gets 1 and l confused
-        current_ore = int(current_ore_text.replace('l', '1'))
+        current_ore = int(current_ore_text.replace('l', '1').replace('A', '4'))
         request_text = get_text(
             frame,
             Point(y=590, x=575),
@@ -191,7 +190,16 @@ def main() -> int:
                     arrow_pos = Point(y=y, x=x)
 
             rects.sort(key=lambda p1_p2: p1_p2[0].x)
-            pos = int((arrow_pos.x - 200) / (len(frame[0]) - 200) * len(rects))
+
+            pos = 0
+            dist = 1e100
+            for i, (rect_tl, _) in enumerate(rects):
+                cand_dist = (
+                    (arrow_pos.x - rect_tl.x) ** 2 +
+                    (arrow_pos.y - rect_tl.y) ** 2
+                ) ** .5
+                if cand_dist < dist:
+                    pos, dist = i, cand_dist
 
             text = get_text(frame, *rects[pos], invert=True).lower()
             # sometimes the ocr engine sucks
@@ -404,14 +412,7 @@ def main() -> int:
 
     states: States = {
         'INITIAL': (
-            (
-                all_match(
-                    match_px(Point(y=701, x=31), Color(b=239, g=88, r=44)),
-                    match_px(Point(y=701, x=14), Color(b=234, g=234, r=234)),
-                ),
-                do(Wait(.5), Press('A')),
-                'MAYBE_PAY_TAX',
-            ),
+            (world, do(Wait(.5), Press('A')), 'MAYBE_PAY_TAX'),
         ),
         'MAYBE_PAY_TAX': (
             (
@@ -733,60 +734,12 @@ def main() -> int:
                 'REWARD',
             ),
         ),
-        'STARTUP': (
-            (
-                all_match(
-                    match_px(Point(y=61, x=745), Color(b=217, g=217, r=217)),
-                    match_text(
-                        'Start',
-                        Point(y=669, x=1158),
-                        Point(y=700, x=1228),
-                        invert=False,
-                    ),
-                ),
-                do(Press('A'), Wait(1.5)),
-                'WAIT_FOR_START',
-            ),
-        ),
-        'WAIT_FOR_START': (
-            (
-                match_px_exact(Point(700, 30), Color(b=16, g=16, r=16)),
-                do(),
-                'START',
-            ),
-            (
-                match_text(
-                    'Downloadable content cannot be played.',
-                    Point(y=266, x=374),
-                    Point(y=312, x=904),
-                    invert=False,
-                ),
-                do(Press('a'), Wait(.2), Press('A'), Wait(.5)),
-                'STARTUP',
-            ),
-        ),
-        'START': (
-            (
-                match_px_exact(Point(700, 30), Color(b=16, g=16, r=16)),
-                do(),
-                'START',
-            ),
-            (
-                always_matches,
-                do(
-                    Wait(.5),
-                    Press('A'),
-                    Wait(1),
-                    Press('A'),
-                ),
-                'INITIAL',
-            ),
-        ),
+        **bootup('STARTUP', 'INITIAL'),
         **alarm('ALARM', quiet=args.quiet),
     }
 
     with serial.Serial(args.serial, 9600) as ser:
-        run(vid=vid, ser=ser, initial='INITIAL', states=states)
+        run(vid=make_vid(), ser=ser, initial='INITIAL', states=states)
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ import cv2
 import serial
 
 from scripts.engine import always_matches
+from scripts.engine import bye
 from scripts.engine import do
 from scripts.engine import make_vid
 from scripts.engine import Press
@@ -22,8 +23,6 @@ def main() -> int:
     parser.add_argument('--serial', default=SERIAL_DEFAULT)
     parser.add_argument('--boxes', type=int, required=True)
     args = parser.parse_args()
-
-    vid = make_vid()
 
     box = 0
 
@@ -58,9 +57,6 @@ def main() -> int:
     def done(frame: object) -> bool:
         return box == args.boxes
 
-    def bye(vid: object, ser: object) -> None:
-        raise SystemExit(0)
-
     states: States = {
         **to_boxes('INITIAL', 'RELEASE_BOX'),
         'RELEASE_BOX': (
@@ -71,7 +67,7 @@ def main() -> int:
     }
 
     with serial.Serial(args.serial, 9600) as ser:
-        run(vid=vid, ser=ser, initial='INITIAL', states=states)
+        run(vid=make_vid(), ser=ser, initial='INITIAL', states=states)
 
 
 if __name__ == '__main__':

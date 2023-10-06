@@ -1,3 +1,9 @@
+# MIGRATED
+
+this repo has been combined into [asottile/nintendo-microcontrollers](https://github.com/asottile/nintendo-microcontrollers)
+
+___
+
 # nintendo switch controller arduino
 
 control your Nintendo Switch using a pro micro
@@ -115,6 +121,16 @@ a  ═══╬═══  d         h  ═══╬═══  k
       ║                     ║
    z     c               n     m
       s                     j
+
+ D-PAD
+
+      4
+
+      ║
+3  ═══╬═══  1
+      ║
+
+      2
 ```
 
 ## thanks

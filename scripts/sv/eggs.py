@@ -8,6 +8,7 @@ import serial
 from scripts.engine import all_match
 from scripts.engine import always_matches
 from scripts.engine import any_match
+from scripts.engine import bye
 from scripts.engine import Color
 from scripts.engine import do
 from scripts.engine import make_vid
@@ -28,7 +29,6 @@ def main() -> int:
     args = parser.parse_args()
 
     require_tesseract()
-    vid = make_vid()
 
     start_time = 0.0
     egg_count = 0
@@ -47,9 +47,6 @@ def main() -> int:
 
     def are_we_done(frame: object) -> bool:
         return egg_count >= args.boxes * 30
-
-    def bye(vid: object, ser: object) -> None:
-        raise SystemExit
 
     states = {
         'INITIAL': (
@@ -217,7 +214,7 @@ def main() -> int:
     }
 
     with serial.Serial(args.serial, 9600) as ser:
-        run(vid=vid, ser=ser, initial='INITIAL', states=states)
+        run(vid=make_vid(), ser=ser, initial='INITIAL', states=states)
 
 
 if __name__ == '__main__':
